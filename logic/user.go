@@ -6,11 +6,27 @@ import (
 	"bluelell_backend/pkg/snowflake"
 )
 
-func SignUp(p *models.ParamSignUp) {
+func SignUp(p *models.ParamSignUp) (err error) {
 	// 1、判断用户存不存在
-	mysql.QueryUserByUsername()
+	if err := mysql.CheckUserExist(p.Username); err != nil {
+		return err
+	}
 	// 2、生成UID
-	snowflake.GetID()
+	userID := snowflake.GenID()
+	// 构造一个User实例
+	user := &models.User{
+		UserID:   userID,
+		Password: p.Password,
+		Username: p.Username,
+	}
 	// 3、保存进数据库
-	mysql.InsertUser()
+	return mysql.InsertUser(user)
+}
+
+func Login(p *models.ParamLogin) error {
+	user := &models.User{
+		Username: p.Username,
+		Password: p.Password,
+	}
+	return mysql.Login(user)
 }

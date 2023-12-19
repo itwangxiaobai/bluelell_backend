@@ -1,40 +1,23 @@
 package snowflake
 
 import (
-	"fmt"
 	"time"
 
-	"github.com/sony/sonyflake"
+	sf "github.com/bwmarrin/snowflake"
 )
 
-var (
-	sonyFlake     *sonyflake.Sonyflake
-	sonyMachineID uint16
-)
+var node *sf.Node
 
-func getMachineID() (uint16, error) {
-	return sonyMachineID, nil
-}
-
-// 需传入当前的机器ID
-
-func Init(machineid uint16) (err error) {
-	sonyMachineID = machineid
-	t, _ := time.Parse("2006-01-02", "2023-01-01")
-	settings := sonyflake.Settings{
-		StartTime: t,
-		MachineID: getMachineID,
-	}
-	sonyFlake = sonyflake.NewSonyflake(settings)
-	return
-}
-
-// GetID 返回生成的id值
-func GetID() (id uint64, err error) {
-	if sonyFlake == nil {
-		err = fmt.Errorf("sony flake not inited")
+func Init(startTime string, machineID int64) (err error) {
+	var st time.Time
+	st, err = time.Parse("2006-01-02", startTime)
+	if err != nil {
 		return
 	}
-	id, err = sonyFlake.NextID()
+	sf.Epoch = st.UnixNano() / 1000000
+	node, err = sf.NewNode(machineID)
 	return
+}
+func GenID() int64 {
+	return node.Generate().Int64()
 }

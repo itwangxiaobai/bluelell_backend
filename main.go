@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bluelell_backend/controller"
 	"bluelell_backend/dao/mysql"
 	"bluelell_backend/dao/redis"
 	"bluelell_backend/logger"
@@ -38,13 +39,18 @@ func main() {
 	defer redis.Close()
 
 	// 初始化userid生成方法（雪花算法）
-	if err := snowflake.Init(1); err != nil {
+	if err := snowflake.Init(settings.Conf.StartTime, settings.Conf.MachineID); err != nil {
 		fmt.Printf("init snowflake failed, err:%v\n", err)
 		return
 	}
 
+	// 初始化gin框架中内置的校验器的翻译器
+	if err := controller.InitTrans("zh"); err != nil {
+		fmt.Printf("init validator trans failed, err:%v\n", err)
+		return
+	}
 	// 注册路由
-	r := routers.SetupRouter()
+	r := routers.SetupRouter(settings.Conf.Mode)
 	err := r.Run(fmt.Sprintf(":%d", settings.Conf.Port))
 	if err != nil {
 		fmt.Printf("run server failed. err:%v\n", err)

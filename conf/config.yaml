@@ -1,5 +1,7 @@
 mode: "dev"
 port: 8081
+start_time: "2023-12-01"
+machine_id: 1
 
 log:
   level: "debug"
