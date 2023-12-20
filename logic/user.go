@@ -3,6 +3,7 @@ package logic
 import (
 	"bluelell_backend/dao/mysql"
 	"bluelell_backend/models"
+	"bluelell_backend/pkg/jwt"
 	"bluelell_backend/pkg/snowflake"
 )
 
@@ -23,10 +24,15 @@ func SignUp(p *models.ParamSignUp) (err error) {
 	return mysql.InsertUser(user)
 }
 
-func Login(p *models.ParamLogin) error {
+func Login(p *models.ParamLogin) (token string, err error) {
 	user := &models.User{
 		Username: p.Username,
 		Password: p.Password,
 	}
-	return mysql.Login(user)
+	// 传递的是指针，就能拿到user.UserID
+	if err := mysql.Login(user); err != nil {
+		return "", err
+	}
+	// 生成jwt
+	return jwt.GenToken(user.UserID, user.Username)
 }

@@ -50,8 +50,9 @@ func encryptPassword(oPassword string) string {
 }
 
 func Login(user *models.User) (err error) {
-	oPassword := user.Password
-	sqlStr := "select user_id, username, password from user where username = ?"
+	oPassword := user.Password // 用户登录的密码
+	//fmt.Println(oPassword)
+	sqlStr := `select user_id, username, password from user where username=?`
 	err = db.Get(user, sqlStr, user.Username)
 	if err == sql.ErrNoRows {
 		return ErrorUserNotExist
@@ -62,6 +63,7 @@ func Login(user *models.User) (err error) {
 	}
 	// 判断密码是否正确
 	password := encryptPassword(oPassword)
+	//fmt.Printf("加密后的密码：%s\n数据库中查到的密码：%s\n", password, user.Password)
 	if password != user.Password {
 		return ErrorInvalidPassword
 	}
