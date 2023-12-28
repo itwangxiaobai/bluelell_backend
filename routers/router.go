@@ -4,8 +4,6 @@ import (
 	"bluelell_backend/controller"
 	"bluelell_backend/logger"
 	"bluelell_backend/middlewares"
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -15,14 +13,18 @@ func SetupRouter(mode string) *gin.Engine {
 	}
 	r := gin.New()
 	r.Use(logger.GinLogger(), logger.GinRecovery(true))
+	v1 := r.Group("/api/v1")
 	// 请求注册路由
-	r.POST("/signup", controller.SignUpHandler)
+	v1.POST("/signup", controller.SignUpHandler)
 	// 登陆路由
-	r.POST("/login", controller.LoginHandler)
-	r.GET("/ping", middlewares.JWTAuthMiddleware(), func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"msg": "ok",
-		})
-	})
+	v1.POST("/login", controller.LoginHandler)
+
+	v1.Use(middlewares.JWTAuthMiddleware())
+	{
+		v1.GET("community", controller.CommunityHandler)
+		v1.GET("community/:id", controller.CommunityDetailHandler)
+		v1.POST("post", controller.CreatePostHandler)
+	}
+
 	return r
 }
