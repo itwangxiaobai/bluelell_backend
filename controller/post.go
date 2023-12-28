@@ -5,6 +5,7 @@ import (
 	"bluelell_backend/models"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
+	"strconv"
 )
 
 // CreatePostHandler 创建帖子函数
@@ -32,4 +33,25 @@ func CreatePostHandler(c *gin.Context) {
 	}
 	// 3.返回响应
 	ResponseSuccess(c, nil)
+}
+
+// GetPostDetailHandler 获取帖子详情处理函数
+func GetPostDetailHandler(c *gin.Context) {
+	// 1.获取参数（从URL获取帖子的id）
+	pidStr := c.Param("id")
+	pid, err := strconv.ParseInt(pidStr, 10, 64)
+	if err != nil {
+		zap.L().Error("get post detail with invalid param", zap.Error(err))
+		ResponseError(c, CodeInvalidParam)
+		return
+	}
+	// 2.根据id获取帖子数据（查数据库）
+	data, err := logic.GetPostById(pid)
+	if err != nil {
+		zap.L().Error("logic.GetPostById(pid) failed", zap.Error(err))
+		ResponseError(c, CodeServerBusy)
+		return
+	}
+	// 3.返回响应
+	ResponseSuccess(c, data)
 }

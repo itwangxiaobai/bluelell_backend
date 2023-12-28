@@ -8,6 +8,6 @@ type Post struct {
 	CommunityID int64     `json:"community_id" db:"community_id" binding:"required"`
 	Status      int32     `json:"status" db:"status"`
 	Title       string    `json:"title" db:"title" binding:"required"`
-	Content     string    `json:"content" db:"contest" binding:"required"`
+	Content     string    `json:"content" db:"content" binding:"required"`
 	CreateTime  time.Time `json:"create_time" db:"create_time"`
 }
