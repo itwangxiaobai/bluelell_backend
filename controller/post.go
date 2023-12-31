@@ -55,3 +55,18 @@ func GetPostDetailHandler(c *gin.Context) {
 	// 3.返回响应
 	ResponseSuccess(c, data)
 }
+
+// GetPostListHandler 获取帖子列表处理函数
+func GetPostListHandler(c *gin.Context) {
+	// 获取分页参数
+	page, size := getPageInfo(c)
+	// 获取数据
+	data, err := logic.GetPostList(page, size)
+	if err != nil {
+		zap.L().Error("logic.GetPostList(page, size) failed", zap.Error(err))
+		ResponseError(c, CodeServerBusy)
+		return
+	}
+	// 返回响应
+	ResponseSuccess(c, data)
+}

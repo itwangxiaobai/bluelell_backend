@@ -15,3 +15,17 @@ func GetPostById(pid int64) (post *models.Post, err error) {
 	err = db.Get(post, sqlStr, pid)
 	return
 }
+
+func GetUserById(uid int64) (user *models.User, err error) {
+	user = new(models.User)
+	sqlStr := `select user_id, username from user where user_id = ?`
+	err = db.Get(user, sqlStr, uid)
+	return
+}
+
+func GetPostList(page, size int64) (posts []*models.Post, err error) {
+	sqlStr := `select post_id, title, content, author_id, community_id, create_time from post order by create_time desc limit ?, ?`
+	posts = make([]*models.Post, 0, 2)
+	err = db.Select(&posts, sqlStr, (page-1)*size, size)
+	return
+}
