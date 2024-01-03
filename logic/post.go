@@ -2,6 +2,7 @@ package logic
 
 import (
 	"bluelell_backend/dao/mysql"
+	"bluelell_backend/dao/redis"
 	"bluelell_backend/models"
 	"bluelell_backend/pkg/snowflake"
 	"go.uber.org/zap"
@@ -11,8 +12,13 @@ func CreatePost(p *models.Post) (err error) {
 	// 1.生成post_id
 	p.ID = snowflake.GenID()
 	// 2.保存到数据库
-	return mysql.CreatePost(p)
+	err = mysql.CreatePost(p)
+	if err != nil {
+		return err
+	}
+	err = redis.CreatePost(p.ID)
 	// 3.返回
+	return
 }
 
 func GetPostById(pid int64) (data *models.APIPostDetail, err error) {

@@ -5,6 +5,7 @@ import (
 	"bluelell_backend/logic"
 	"bluelell_backend/models"
 	"errors"
+	"fmt"
 
 	"go.uber.org/zap"
 
@@ -59,7 +60,7 @@ func LoginHandler(c *gin.Context) {
 		return
 	}
 	// 2、业务逻辑处理
-	token, err := logic.Login(p)
+	user, err := logic.Login(p)
 	if err != nil {
 		zap.L().Error("logic.Login failed", zap.String("username", p.Username), zap.Error(err))
 		if errors.Is(err, mysql.ErrorUserNotExist) {
@@ -70,5 +71,9 @@ func LoginHandler(c *gin.Context) {
 		return
 	}
 	// 3、返回响应
-	ResponseSuccess(c, token)
+	ResponseSuccess(c, gin.H{
+		"user_id":  fmt.Sprintf("%d", user.UserID),
+		"username": user.Username,
+		"token":    user.Token,
+	})
 }
