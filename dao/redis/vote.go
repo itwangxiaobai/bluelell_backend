@@ -1,9 +1,12 @@
 package redis
 
 import (
+	"context"
 	"errors"
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v8"
+	"go.uber.org/zap"
 	"math"
+	"strconv"
 	"time"
 )
 
@@ -32,35 +35,45 @@ const (
 
 var (
 	ErrVoteTimeExpire = errors.New("投票时间已过")
+	ErrVoteRepeated   = errors.New("不允许重复投票")
 )
 
-func CreatePost(postID int64) error {
+func CreatePost(postID, communityID int64) error {
 	pipeline := client.TxPipeline()
 	// 帖子时间
-	pipeline.ZAdd(getRedisKey(KeyPostTimeZSet), redis.Z{
+	pipeline.ZAdd(context.Background(), getRedisKey(KeyPostTimeZSet), &redis.Z{
 		Score:  float64(time.Now().Unix()),
 		Member: postID,
 	})
 
 	// 帖子分数
-	pipeline.ZAdd(getRedisKey(KeyPostScoreZSet), redis.Z{
+	pipeline.ZAdd(context.Background(), getRedisKey(KeyPostScoreZSet), &redis.Z{
 		Score:  float64(time.Now().Unix()),
 		Member: postID,
 	})
-	_, err := pipeline.Exec()
+	// 更新：把帖子id加到社区的set
+	cKey := getRedisKey(KeyCommunitySetPF + strconv.Itoa(int(communityID)))
+	pipeline.SAdd(context.Background(), cKey, postID)
+	_, err := pipeline.Exec(context.Background())
 	return err
 }
 
 func VoteForPost(userID, postID string, value float64) error {
 	// 1、判断帖子限制
 	// 去redis取帖子的发帖时间
-	postTime := client.ZScore(getRedisKey(KeyPostTimeZSet), postID).Val()
+	postTime := client.ZScore(context.Background(), getRedisKey(KeyPostTimeZSet), postID).Val()
 	if float64(time.Now().Unix())-postTime > onWeekInSeconds {
 		return ErrVoteTimeExpire
 	}
 	// 2、更新帖子分数
 	// 先查当前用户给当前帖子的投票记录
-	ov := client.ZScore(getRedisKey(KeyPostVotedZSetPF+postID), userID).Val()
+	ov := client.ZScore(context.Background(), getRedisKey(KeyPostVotedZSetPF+postID), userID).Val()
+	zap.L().Debug("ov and value的值是", zap.Float64("value", value), zap.Float64("ov", ov))
+
+	// 更新：如果这一次投票的值和之前保存的值一致，就提示不允许重复投票
+	if value == ov {
+		return ErrVoteRepeated
+	}
 	var op float64
 	if value > ov {
 		op = 1
@@ -70,17 +83,17 @@ func VoteForPost(userID, postID string, value float64) error {
 	diff := math.Abs(ov - value) // 计算两次投票的差值
 	// 2、3需要放在一个事务中进行处理
 	pipeline := client.TxPipeline()
-	pipeline.ZIncrBy(getRedisKey(KeyPostScoreZSet), op*diff*scorePerVote, postID)
+	pipeline.ZIncrBy(context.Background(), getRedisKey(KeyPostScoreZSet), op*diff*scorePerVote, postID)
 
 	// 3、记录用户该帖子投票的数据
 	if value == 0 {
-		pipeline.ZRem(getRedisKey(KeyPostVotedZSetPF+postID), userID)
+		pipeline.ZRem(context.Background(), getRedisKey(KeyPostVotedZSetPF+postID), userID)
 	} else {
-		pipeline.ZAdd(getRedisKey(KeyPostVotedZSetPF+postID), redis.Z{
+		pipeline.ZAdd(context.Background(), getRedisKey(KeyPostVotedZSetPF+postID), &redis.Z{
 			Score:  value,
-			Member: postID,
+			Member: userID,
 		})
 	}
-	_, err := pipeline.Exec()
+	_, err := pipeline.Exec(context.Background())
 	return err
 }

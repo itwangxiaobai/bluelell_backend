@@ -2,9 +2,10 @@ package redis
 
 import (
 	"bluelell_backend/settings"
+	"context"
 	"fmt"
 
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v8"
 )
 
 var (
@@ -22,7 +23,7 @@ func Init(cfg *settings.RedisConfig) (err error) {
 		MinIdleConns: cfg.MinIdleConns,
 	})
 
-	_, err = client.Ping().Result()
+	_, err = client.Ping(context.Background()).Result()
 	if err != nil {
 		return err
 	}
