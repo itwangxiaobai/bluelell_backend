@@ -6,6 +6,7 @@ import (
 	"bluelell_backend/middlewares"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"time"
 )
 
 func SetupRouter(mode string) *gin.Engine {
@@ -29,7 +30,7 @@ func SetupRouter(mode string) *gin.Engine {
 	v1.GET("/community/:id", controller.CommunityDetailHandler)
 	v1.GET("/post/:id", controller.GetPostDetailHandler)
 
-	v1.Use(middlewares.JWTAuthMiddleware())
+	v1.Use(middlewares.JWTAuthMiddleware(), middlewares.RateLimitMiddleware(2*time.Second, 1))
 	{
 		// v1.GET("community", controller.CommunityHandler)
 		// v1.GET("community/:id", controller.CommunityDetailHandler)
