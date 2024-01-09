@@ -11,6 +11,15 @@ import (
 	"fmt"
 )
 
+// @title bluebell项目接口文档
+// @version 1.0
+// @description Go Web开发进阶项目实战课程bluebell
+
+// @contact.name xiaobaige
+// @contact.url http:www.baidu.com
+
+// @host 127.0.0.1:8081
+// @BasePath /api/v1
 func main() {
 	// 加载配置
 	if err := settings.Init(); err != nil {
