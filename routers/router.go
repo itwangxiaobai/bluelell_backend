@@ -4,6 +4,7 @@ import (
 	"bluelell_backend/controller"
 	"bluelell_backend/logger"
 	"bluelell_backend/middlewares"
+	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"time"
@@ -46,6 +47,6 @@ func SetupRouter(mode string) *gin.Engine {
 			"msg": "404",
 		})
 	})
-
+	pprof.Register(r)
 	return r
 }
